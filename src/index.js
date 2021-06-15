@@ -4,6 +4,7 @@ import { typeDefs } from "./typeDefs";
 import { resolvers } from "./resolvers";
 import mongoose from "mongoose";
 import cors from "cors";
+import { User } from "./models/User";
 import users from "./routes/users";
 import jwt from "jsonwebtoken";
 async function startApolloServer() {
@@ -12,13 +13,13 @@ async function startApolloServer() {
   const server = new ApolloServer({
     typeDefs,
     resolvers,
-    context: ({ req }) => {
+    context: async ({ req }) => {
       const token = req.headers.authorization || "";
       try {
         var decoded = jwt.verify(token, process.env.secretKey);
         const { userName, id } = decoded;
-        // console.log(userName, id);
-        return { userName, id };
+        const user = await User.findById(id);
+        return { userName, id, user };
       } catch (error) {
         console.log(error);
       }

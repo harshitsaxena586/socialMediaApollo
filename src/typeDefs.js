@@ -2,27 +2,18 @@ import { gql } from "apollo-server-express";
 
 export const typeDefs = gql`
   type Query {
-    hello: String
+    profile: User!
+    user(userId: ID!): User
     posts: [Post]
-    books: [Book]
-    cats: [Cat]
-    myCat(id: ID): Cat
-    myCatfromName(name: String): [Cat]
   }
 
   type Mutation {
-    books(title: String, author: String): Book
-    createCat(naam: String!, maalik: String): String
+    singleUpload(file: Upload!): String!
     updateLikes(postId: ID): String
-    addPost(title: String): String
-    # addPost(title: String,postedBy: String)
+    follow(toFollow: ID!): String
+    addPost(title: String!, caption: String, public_id: String): String
   }
 
-  type Cat {
-    id: ID!
-    name: String!
-    userName: String!
-  }
   type Book {
     title: String
     author: String
@@ -31,13 +22,25 @@ export const typeDefs = gql`
     id: ID!
     postedBy: User
     title: String
+    public_id: String
     caption: String
     likes: [User]
   }
+  type userLite {
+    id: ID!
+    fullName: String
+    userName: String
+  }
   type User {
+    name: String
     id: ID!
     userName: String
     password: String
-    # posts:[Post]
+    followers: [userLite]
+    following: [userLite]
+    posts: [Post]
+  }
+  type Success {
+    success: Boolean
   }
 `;

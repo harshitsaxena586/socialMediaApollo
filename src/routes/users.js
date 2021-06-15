@@ -12,28 +12,37 @@ router.route("/").post(async (req, res) => {
   if (!user) {
     res.status(404).json({ success: false, msg: "no userName found" });
   }
-  console.log(user);
   if (await bcrypt.compare(password, user.password)) {
     const token = jwt.sign({ userName, id: user._id }, process.env.secretKey, {
       expiresIn: "10d",
     });
-    res.json({ success: true, token });
+    res.json({
+      success: true,
+      token,
+      userId: user._id,
+      userName: user.userName,
+    });
   } else
     res.status(401).json({ success: false, message: "Incorrect Password" });
 });
 
 router.route("/s").post(async (req, res) => {
-  const { userName, password } = req.body.credentials;
+  const { userName, password, name } = req.body.credentials;
   const hashedPassword = await bcrypt.hash(password, 10);
-  const user = new User({ userName: userName, password: hashedPassword });
-  user.save();
-  res.json({ success: true });
-});
-// router.route("/s").post(async (req, res) => {});
-router.route("/slow").get(async (req, res) => {
-  setTimeout(() => {
+  const user = new User({
+    userName: userName,
+    password: hashedPassword,
+    name: name,
+  });
+  try {
+    await user.save();
     res.json({ success: true });
-  }, 4000);
+  } catch (error) {
+    console.log("entered catch");
+    res
+      .status(403)
+      .json({ success: false, message: "Username already exists" });
+  }
 });
 
 export default router;
