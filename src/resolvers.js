@@ -17,20 +17,23 @@ export const resolvers = {
       const userToFind = await User.findById(userId)
         .populate("followers")
         .populate("following");
-      userToFind.password = "you are not authorized to query this field";
       return userToFind;
     },
     posts: async (_, args, { user }) => {
-      const Posts = await Post.find()
+      const posts = await Post.find()
         .populate("postedBy", { userName: 1 })
         .populate("likes", { userName: 1 });
-      return Posts;
+      posts.reverse();
+      return posts;
+    },
+    users: async () => {
+      const users = await User.find().select("userName name");
+      return users;
     },
   },
 
   Mutation: {
     follow: async (_, { toFollow }, { user }) => {
-      console.log("hits follow");
       const userToFollow = await User.findById(toFollow);
       const { followers } = userToFollow;
       const isUserToFollowAlreadyFollowed = followers.find(
@@ -50,6 +53,7 @@ export const resolvers = {
       await userToFollow.save();
       user.following.push(userToFollow.id); //adding the userToFollow in clients following list
       await user.save();
+
       return "success true ";
     },
 

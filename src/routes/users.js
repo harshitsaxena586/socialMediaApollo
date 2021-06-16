@@ -37,8 +37,22 @@ router.route("/s").post(async (req, res) => {
   try {
     await user.save();
     res.json({ success: true });
+
+    const objects = [
+      {
+        name: name,
+        userName: userName,
+      },
+    ];
+
+    index
+      .saveObjects(objects, { autoGenerateObjectIDIfNotExist: true })
+      .then(({ objectIDs }) => {
+        console.log(objectIDs);
+      });
+
   } catch (error) {
-    console.log("entered catch");
+    
     res
       .status(403)
       .json({ success: false, message: "Username already exists" });
