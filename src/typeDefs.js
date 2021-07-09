@@ -6,18 +6,24 @@ export const typeDefs = gql`
     user(userId: ID!): User
     posts: [Post]
     users: [User]
+    notifications: [Notification]
   }
 
   type Mutation {
     singleUpload(file: Upload!): String!
-    updateLikes(postId: ID): String
+    updateLikes(postId: ID, clientuserName: String): String
     follow(toFollow: ID!): String
     addPost(title: String!, caption: String, public_id: String): String
+    removeNotification: String
   }
 
-  type Book {
-    title: String
-    author: String
+  type Notification {
+    id: ID
+    postId: String!
+    refUserId: String
+    type: String
+    content: String
+    isRead: Boolean
   }
   type Post {
     id: ID!
@@ -40,6 +46,7 @@ export const typeDefs = gql`
     followers: [userLite]
     following: [userLite]
     posts: [Post]
+    notifications: [Notification]
   }
   type Success {
     success: Boolean

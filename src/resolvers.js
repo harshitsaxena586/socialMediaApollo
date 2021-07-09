@@ -1,6 +1,8 @@
 import { Post } from "./models/Post";
 import { User } from "./models/User";
-import axios from "axios";
+import { Notification } from "./models/Notification";
+import addNewNotfication from "./utils/addNewNotifcation";
+import removeNotification from "./utils/removeNotifcation";
 export const resolvers = {
   // Posts: {},
   Query: {
@@ -8,7 +10,8 @@ export const resolvers = {
       const toPopulate = await User.findById(user.id)
         .populate("following")
         .populate("followers")
-        .populate("posts");
+        .populate("posts")
+        .populate("notifications");
       toPopulate.password = "you are not authorized to query this field";
       return toPopulate;
     },
@@ -19,7 +22,7 @@ export const resolvers = {
         .populate("following");
       return userToFind;
     },
-    posts: async (_, args, { user }) => {
+    posts: async (_, args) => {
       const posts = await Post.find()
         .populate("postedBy", { userName: 1 })
         .populate("likes", { userName: 1 });
@@ -29,6 +32,10 @@ export const resolvers = {
     users: async () => {
       const users = await User.find().select("userName name");
       return users;
+    },
+    notifications: async (_, {}, { userId }) => {
+      const notification = Notification.find();
+      return notification;
     },
   },
 
@@ -49,12 +56,20 @@ export const resolvers = {
         );
         await user.save();
         return "success true ";
-      } else userToFollow.followers.push(user.id); //adding the current client's Id to users followers list
-      await userToFollow.save();
-      user.following.push(userToFollow.id); //adding the userToFollow in clients following list
-      await user.save();
-
-      return "success true ";
+      } else {
+        userToFollow.followers.push(user.id); //adding the current client's Id to users followers list
+        await userToFollow.save();
+        user.following.push(userToFollow.id); //adding the userToFollow in clients following list
+        await user.save();
+        addNewNotfication(
+          {
+            content: `${user.userName} has started following you `,
+            type: "FOLLOW",
+          },
+          { refUserId: user.id, userToSendNotification: userToFollow._id }
+        );
+        return "success true ";
+      }
     },
 
     addPost: async (_, { title, caption, public_id }, { id, user }) => {
@@ -70,7 +85,7 @@ export const resolvers = {
       await user.save();
       return "success true";
     },
-    updateLikes: async (_, { postId }, { id }) => {
+    updateLikes: async (_, { postId, clientuserName }, { id }) => {
       const post = await Post.findById(postId);
       const { likes } = post;
       const isPostLikedByUserEarlier = likes.find((likedBy) => likedBy == id);
@@ -78,9 +93,19 @@ export const resolvers = {
         post.likes = likes.filter((like) => like != id);
         await post.save();
         return "success true";
-      } else post.likes.push(id);
-      await post.save();
-      return "success true";
+      } else {
+        post.likes.push(id);
+        await post.save();
+        addNewNotfication(
+          { content: `${clientuserName} liked your post `, type: "LIKE" },
+          { postId, refUserId: id, userToSendNotification: post.postedBy }
+        );
+        return "success true";
+      }
+    },
+    removeNotification: async (_, {}, { id }) => {
+      await removeNotification(id);
+      return "Success True";
     },
   },
 };
